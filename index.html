@@ -70,6 +70,10 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
 .toast.show{transform:none}
 .banner{background:var(--warn-bg);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:14px}
 .banner[hidden]{display:none}
+.gps{background:var(--warn-bg);color:var(--ink);border:2px solid var(--warn);border-radius:14px;padding:14px;margin-bottom:14px}
+.gps[hidden]{display:none}
+.gps b{display:block;font:700 22px/1.15 "Barlow Condensed",system-ui,sans-serif}
+.gps p{margin:4px 0 12px;font-size:14px}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
 </style>
 </head>
@@ -84,6 +88,7 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
   </header>
 
   <div class="banner" id="banner" hidden></div>
+  <div class="gps" id="gps" hidden></div>
 
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" id="tab-voy" aria-selected="false" aria-controls="p-voy">Me voy<small>Dejo mi plaza libre</small></button>
@@ -122,7 +127,7 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
     ["Arrabal / Picarral",41.6743,-0.8730],["Oliver / Valdefierro",41.6393,-0.9249]
   ];
 
-  var state = { me:null, spots:[], uid:null, db:null, col:null, local:false, tab:"busco" };
+  var state = { gpsErr:null, me:null, spots:[], uid:null, db:null, col:null, local:false, tab:"busco" };
   var $ = function(id){ return document.getElementById(id); };
 
   function esc(s){ var d=document.createElement("div"); d.textContent=String(s==null?"":s); return d.innerHTML; }
@@ -144,19 +149,58 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
   })();
 
   // ---------- ubicación ----------
-  function setMe(lat,lng,label,fuente){ state.me={lat:lat,lng:lng,label:label,fuente:fuente}; renderAll(); }
+  function setMe(lat,lng,label,fuente,acc){ state.me={lat:lat,lng:lng,label:label,fuente:fuente,acc:acc||null,dir:null}; renderAll(); }
+  function aDireccion(lat,lng){
+    try{
+      fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&accept-language=es&lat="+lat+"&lon="+lng)
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          var a=j.address||{};
+          var calle=a.road||a.pedestrian||a.footway||a.path||a.neighbourhood||"";
+          var d=calle ? calle+(a.house_number?", "+a.house_number:"") : (j.display_name||"").split(",").slice(0,2).join(",").trim();
+          if(d && state.me && state.me.fuente==="gps"){
+            state.me.dir=d;
+            var c=$("calle"); if(c && !c.value) c.value=d;
+            renderAll();
+          }
+        }).catch(function(){});
+    }catch(e){}
+  }
+  function renderGps(){
+    var el=$("gps"); if(!el) return;
+    if(state.me && state.me.fuente==="gps"){ el.hidden=true; return; }
+    el.hidden=false;
+    var txt = state.gpsErr || "Así te mostramos las plazas libres más cercanas. Al pulsar, el navegador te pedirá permiso: elige «Permitir».";
+    el.innerHTML='<b>Activa tu GPS mientras uses la app</b><p>'+esc(txt)+'</p><button class="btn block" data-act="gps" type="button">Activar GPS</button>';
+  }
   function pedirGps(){
-    if(!navigator.geolocation){ whereMsg("Sin GPS: elige tu zona en «Me voy».","warn"); return; }
-    navigator.geolocation.getCurrentPosition(function(p){
-      setMe(p.coords.latitude,p.coords.longitude,"Tu ubicación","gps");
-    }, function(){
-      whereMsg("No se pudo usar el GPS. Elige tu zona en «Me voy».","warn");
-    }, {enableHighAccuracy:true,timeout:9000,maximumAge:30000});
+    function fallo(msg,e){ state.gpsErr=msg+(e?" (código "+e.code+(e.message?": "+e.message:"")+")":""); whereMsg("Sin GPS","warn"); renderGps(); }
+    if(!window.isSecureContext){ fallo("El GPS solo funciona en páginas https. Mientras tanto, elige tu zona en «Me voy»."); return; }
+    if(!navigator.geolocation){ fallo("Este navegador no tiene GPS. Elige tu zona en «Me voy»."); return; }
+    state.gpsErr="Buscando tu ubicación…"; renderGps();
+    function ok(p){
+      state.gpsErr=null;
+      setMe(p.coords.latitude,p.coords.longitude,"Tu ubicación","gps",Math.round(p.coords.accuracy||0));
+      aDireccion(p.coords.latitude,p.coords.longitude);
+    }
+    function error(e){
+      if(e && e.code===1){
+        fallo(/policy|disabled/i.test(e.message||"")
+          ? "Esta pantalla no puede usar el GPS. Abre la página directamente en Safari o Chrome, o elige tu zona."
+          : "Permiso denegado. Actívalo para este sitio: iPhone, botón aA > Ajustes del sitio web > Ubicación. Android, candado > Permisos > Ubicación. Luego pulsa de nuevo.",e);
+      } else {
+        fallo("No hay señal de ubicación. Comprueba que la ubicación del teléfono está activada y pulsa de nuevo.",e);
+      }
+    }
+    navigator.geolocation.getCurrentPosition(ok, function(e){
+      if(e && e.code===1){ error(e); return; }
+      navigator.geolocation.getCurrentPosition(ok, error, {enableHighAccuracy:false,timeout:15000,maximumAge:60000});
+    }, {enableHighAccuracy:true,timeout:8000,maximumAge:30000});
   }
   function whereMsg(t,cls){ ["where-voy","where-busco"].forEach(function(id){ $(id).innerHTML='<span class="pill '+(cls||"")+'">'+esc(t)+'</span>'; }); }
   function renderWhere(){
     if(!state.me) return;
-    var t = state.me.fuente==="gps" ? "Ubicación por GPS" : "Zona: "+state.me.label;
+    var t = state.me.fuente==="gps" ? "Estás en: "+(state.me.dir||"ubicación por GPS")+(state.me.acc?" (±"+state.me.acc+" m)":"") : "Zona: "+state.me.label;
     ["where-voy","where-busco"].forEach(function(id){
       $(id).innerHTML='<span class="pill ok">'+esc(t)+'</span><button class="btn ghost small" data-act="gps" type="button">Usar GPS</button>';
     });
@@ -202,7 +246,7 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
     var pos=null, origen="";
     if(zi!==""){ var z=ZONAS[+zi]; pos={lat:z[1]+(Math.random()-.5)*0.003,lng:z[2]+(Math.random()-.5)*0.003}; origen=z[0]; }
     else if(state.me&&state.me.fuente==="gps"){ pos={lat:state.me.lat,lng:state.me.lng}; origen="GPS"; }
-    if(!pos){ toast("Activa el GPS o elige tu zona."); return; }
+    if(!pos){ pedirGps(); toast("Necesito tu ubicación: permite el GPS o elige tu zona."); return; }
     if(!calle){ $("calle").focus(); toast("Escribe la calle para que te encuentren."); return; }
     var id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
     var btn=$("btn-voy"); btn.disabled=true;
@@ -274,7 +318,7 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
     var mias=visibles().filter(function(s){return s.by===state.uid;});
     $("mis").innerHTML = mias.length ? '<p class="hint">Tienes '+mias.length+' aviso'+(mias.length>1?'s':'')+' activo'+(mias.length>1?'s':'')+'. Puedes retirarlos desde «Busco plaza».</p>' : '';
   }
-  function renderAll(){ renderWhere(); renderLista(); renderMis(); }
+  function renderAll(){ renderWhere(); renderLista(); renderMis(); renderGps(); }
 
   // ---------- pestañas y eventos ----------
   function setTab(t){
@@ -283,7 +327,8 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
     $("tab-busco").setAttribute("aria-selected",t==="busco");
     $("p-voy").hidden=t!=="voy"; $("p-busco").hidden=t!=="busco";
   }
-  $("tab-voy").addEventListener("click",function(){setTab("voy");});
+  function pedirSiHaceFalta(){ if(!state.me || (state.me.fuente!=="gps" && $("zona").value==="")) pedirGps(); }
+  $("tab-voy").addEventListener("click",function(){setTab("voy"); pedirSiHaceFalta();});
   $("tab-busco").addEventListener("click",function(){setTab("busco");});
   $("btn-voy").addEventListener("click",publicar);
   $("zona").addEventListener("change",function(){
