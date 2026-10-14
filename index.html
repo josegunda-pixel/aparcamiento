@@ -117,6 +117,14 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+/* ============ CONFIGURACIÓN DE SUPABASE ============
+   SUPABASE_URL: Supabase > Project Settings > API > Project URL (https://xxxx.supabase.co).
+   Mientras esté vacía, la app funciona en modo de prueba, solo en el móvil. */
+var SUPABASE_URL = "https://xiytxwxydsmybuudgxvm.supabase.co";
+var SUPABASE_KEY = "sb_publishable_eGjZbbzpXFD-iFet1ZhP7g_Vp4tMHyT";
+</script>
 <script>
 (function(){
   var VIDA_MS = 20*60*1000;       // una plaza libre dura 20 min
@@ -285,13 +293,38 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
       if(s&&merge) Object.assign(s,data); else if(!s) state.spots.push(Object.assign({id:id},data));
       renderAll(); return Promise.resolve();
     }
-    var ref=state.col.doc(id);
-    return (merge?ref.update(data):ref.set(data)).catch(function(e){
-      if(e&&e.code==="invalid_argument"){ toast("Tu acceso es solo de lectura: no puedes publicar ni reservar."); }
-      else if(e&&e.code==="quota_exceeded"){ toast("La base de datos está llena. Prueba más tarde."); }
+    var q = merge ? state.sb.from("plazas").update(toRow(data)).eq("id",id)
+                  : state.sb.from("plazas").insert(Object.assign({id:id},toRow(data)));
+    return q.then(function(r){
+      if(r.error) throw r.error;
+      cargar();
+    }).catch(function(e){
+      if(e&&e.code==="42501"){ toast("No tienes permiso para guardar. Revisa las políticas de Supabase."); }
       else { toast("No se pudo guardar. Inténtalo otra vez."); }
       throw e;
     });
+  }
+  function toRow(d){
+    var m={calle:"calle",ciudad:"ciudad",lat:"lat",lng:"lng",zona:"zona",ts:"ts",estado:"estado",by:"by_uid",reservadaPor:"reservada_por",reservadaTs:"reservada_ts"}, o={};
+    Object.keys(d).forEach(function(k){ if(m[k]) o[m[k]]=d[k]; });
+    return o;
+  }
+  function fromRow(r){
+    return {id:r.id,calle:r.calle,ciudad:r.ciudad,lat:r.lat,lng:r.lng,zona:r.zona,ts:Number(r.ts),estado:r.estado,by:r.by_uid,reservadaPor:r.reservada_por,reservadaTs:Number(r.reservada_ts||0)};
+  }
+  var cargando=false;
+  function cargar(){
+    if(!state.sb||cargando) return;
+    cargando=true;
+    state.sb.from("plazas").select("*").gt("ts",Date.now()-60*60*1000).order("ts",{ascending:false}).limit(500)
+      .then(function(r){
+        cargando=false;
+        if(r.error) throw r.error;
+        state.spots=(r.data||[]).map(fromRow); renderAll();
+      }).catch(function(){
+        cargando=false;
+        var b=$("banner"); b.hidden=false; b.textContent="No se pudo conectar con las plazas compartidas. Recarga la página.";
+      });
   }
 
   // ---------- acciones ----------
@@ -414,23 +447,18 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
     var g=null; try{ g=localStorage.getItem("hueco-ciudad"); }catch(e){}
     setCiudad(getC(g)?g:"zaragoza",false,true);
     pedirGps();
-    var db=null, user=null;
-    try{ if(window.claude&&claude.use){ db=await claude.use("db"); user=await claude.use("user"); } }catch(e){}
-    if(user){ try{ state.uid=await user.id(); }catch(e){} }
-    if(!db){
+    var sb=null;
+    try{ if(SUPABASE_URL && SUPABASE_KEY && window.supabase) sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }catch(e){ sb=null; }
+    if(!sb){
       state.local=true;
       var b=$("banner"); b.hidden=false;
-      b.textContent="Modo de prueba: las plazas solo se ven en este móvil. Abre la app desde su enlace, con sesión iniciada, para compartirlas.";
+      b.textContent="Modo de prueba: las plazas solo se ven en este móvil. Falta la URL de Supabase para compartirlas.";
       renderAll(); return;
     }
-    state.db=db; state.col=db.collection("plazas");
-    var desde=Date.now()-60*60*1000;
-    state.col.where("ts",">",desde).orderBy("ts","desc").limit(500).onSnapshot(function(snap){
-      state.spots=snap.docs.map(function(d){ var v=d.data(); v.id=d.id; return v; });
-      renderAll();
-    }, function(){
-      var b=$("banner"); b.hidden=false; b.textContent="No se pudo conectar con las plazas compartidas. Recarga la página.";
-    });
+    state.sb=sb;
+    cargar();
+    sb.channel("plazas-cambios").on("postgres_changes",{event:"*",schema:"public",table:"plazas"},cargar).subscribe();
+    setInterval(cargar,30000);
   }
   init();
 })();
