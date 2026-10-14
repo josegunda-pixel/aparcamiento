@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Hueco · plazas libres en Zaragoza</title>
+<title>Hueco · plazas libres en la calle</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -74,6 +74,7 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
 .gps[hidden]{display:none}
 .gps b{display:block;font:700 22px/1.15 "Barlow Condensed",system-ui,sans-serif}
 .gps p{margin:4px 0 12px;font-size:14px}
+.city{margin:0 0 14px}.city label{margin:0 0 6px;color:var(--muted);font-size:14px}.city select{font:700 22px/1.1 "Barlow Condensed",system-ui,sans-serif;min-height:54px;border:2px solid var(--blue)}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
 </style>
 </head>
@@ -87,6 +88,7 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
     </div>
   </header>
 
+  <div class="city"><label for="ciudad">Ciudad</label><select id="ciudad"></select></div>
   <div class="banner" id="banner" hidden></div>
   <div class="gps" id="gps" hidden></div>
 
@@ -98,7 +100,7 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
   <section class="panel" id="p-voy" role="tabpanel" aria-labelledby="tab-voy" hidden>
     <div class="where" id="where-voy"></div>
     <label for="calle">Calle y número (aprox.)</label>
-    <input id="calle" type="text" placeholder="Ej.: Calle Alfonso I, 20" autocomplete="off" maxlength="80">
+    <input id="calle" type="text" placeholder="Ej.: Calle Mayor, 12" autocomplete="off" maxlength="80">
     <label for="zona">Si no tienes GPS, elige tu zona</label>
     <select id="zona"></select>
     <p class="hint">Cuando salgas, pulsa el botón. La plaza se muestra 20 minutos a quien busca cerca.</p>
@@ -119,15 +121,49 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
 (function(){
   var VIDA_MS = 20*60*1000;       // una plaza libre dura 20 min
   var RESERVA_MS = 5*60*1000;     // "Voy" la guarda 5 min
-  var ZONAS = [
+  var ZGZ = [
     ["Centro / Plaza España",41.6504,-0.8800],["Casco Histórico / Pilar",41.6561,-0.8773],
     ["Delicias",41.6558,-0.9066],["Universidad / San Francisco",41.6420,-0.8990],
     ["Actur / Rey Fernando",41.6812,-0.8924],["San José",41.6420,-0.8700],
     ["Las Fuentes",41.6560,-0.8615],["Torrero",41.6335,-0.8725],
     ["Arrabal / Picarral",41.6743,-0.8730],["Oliver / Valdefierro",41.6393,-0.9249]
   ];
+  var ZONAS = ZGZ;
+  var CIUDADES = [
+    ["A Coruña",43.3623,-8.4115],["Albacete",38.9943,-1.8585],["Alcalá de Henares",40.4820,-3.3635],["Alicante",38.3452,-0.4810],
+    ["Almería",36.8381,-2.4597],["Ávila",40.6564,-4.6818],["Badajoz",38.8794,-6.9707],["Badalona",41.4500,2.2474],
+    ["Barcelona",41.3874,2.1686],["Benidorm",38.5411,-0.1225],["Bilbao",43.2630,-2.9350],["Burgos",42.3439,-3.6969],
+    ["Cáceres",39.4753,-6.3724],["Cádiz",36.5271,-6.2886],["Cartagena",37.6257,-0.9966],["Castellón de la Plana",39.9864,-0.0513],
+    ["Ceuta",35.8894,-5.3213],["Ciudad Real",38.9863,-3.9291],["Córdoba",37.8882,-4.7794],["Cuenca",40.0704,-2.1374],
+    ["Elche",38.2699,-0.7126],["Ferrol",43.4845,-8.2328],["Getafe",40.3057,-3.7320],["Gijón",43.5322,-5.6611],
+    ["Girona",41.9794,2.8214],["Granada",37.1773,-3.5986],["Guadalajara",40.6333,-3.1667],["Huelva",37.2614,-6.9447],
+    ["Huesca",42.1401,-0.4089],["Jaén",37.7796,-3.7849],["Jerez de la Frontera",36.6850,-6.1261],["L'Hospitalet de Llobregat",41.3596,2.0997],
+    ["Las Palmas de Gran Canaria",28.1235,-15.4363],["León",42.5987,-5.5671],["Lleida",41.6176,0.6200],["Logroño",42.4627,-2.4450],
+    ["Lugo",43.0097,-7.5568],["Madrid",40.4168,-3.7038],["Málaga",36.7213,-4.4214],["Marbella",36.5101,-4.8825],
+    ["Melilla",35.2923,-2.9381],["Mérida",38.9161,-6.3437],["Murcia",37.9922,-1.1307],["Ourense",42.3358,-7.8639],
+    ["Oviedo",43.3614,-5.8593],["Palencia",42.0096,-4.5288],["Palma",39.5696,2.6502],["Pamplona",42.8125,-1.6458],
+    ["Pontevedra",42.4310,-8.6444],["Sabadell",41.5463,2.1086],["Salamanca",40.9701,-5.6635],["San Sebastián",43.3183,-1.9812],
+    ["Santa Cruz de Tenerife",28.4636,-16.2518],["Santander",43.4623,-3.8100],["Santiago de Compostela",42.8782,-8.5448],["Segovia",40.9429,-4.1088],
+    ["Sevilla",37.3891,-5.9845],["Soria",41.7664,-2.4790],["Tarragona",41.1189,1.2445],["Terrassa",41.5632,2.0089],
+    ["Teruel",40.3456,-1.1065],["Toledo",39.8628,-4.0273],["Valencia",39.4699,-0.3763],["Valladolid",41.6523,-4.7245],
+    ["Vigo",42.2406,-8.7207],["Vitoria-Gasteiz",42.8467,-2.6716],["Zamora",41.5035,-5.7446],["Zaragoza",41.6488,-0.8891]
+  ].map(function(c){
+    return {id:c[0].normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""),n:c[0],lat:c[1],lng:c[2]};
+  }).sort(function(a,b){ return a.n.localeCompare(b.n,"es"); });
+  var RADIO_CIUDAD = 40000;       // metros: hasta aquí el GPS cuenta como "de esa ciudad"
+  function getC(id){ return CIUDADES.filter(function(c){return c.id===id;})[0]||null; }
+  function cercana(lat,lng){
+    var best=null;
+    CIUDADES.forEach(function(c){ var d=dist({lat:lat,lng:lng},c); if(!best||d<best.d) best={c:c,d:d}; });
+    return best;
+  }
+  function zonasDe(c){
+    if(c.id==="zaragoza") return ZGZ;
+    var d=0.013;
+    return [["Centro",c.lat,c.lng],["Norte",c.lat+d,c.lng],["Sur",c.lat-d,c.lng],["Este",c.lat,c.lng+d*1.3],["Oeste",c.lat,c.lng-d*1.3]];
+  }
 
-  var state = { gpsErr:null, me:null, spots:[], uid:null, db:null, col:null, local:false, tab:"busco" };
+  var state = { gpsErr:null, me:null, spots:[], uid:null, db:null, col:null, local:false, tab:"busco", ciudad:"zaragoza", manual:false };
   var $ = function(id){ return document.getElementById(id); };
 
   function esc(s){ var d=document.createElement("div"); d.textContent=String(s==null?"":s); return d.innerHTML; }
@@ -142,11 +178,26 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
   function fmtDist(m){ return m<1000 ? Math.round(m/10)*10+" m" : (m/1000).toFixed(1).replace(".",",")+" km"; }
   function hace(ts){ var m=Math.floor((Date.now()-ts)/60000); return m<1?"ahora mismo":"hace "+m+" min"; }
 
-  // ---------- zonas ----------
-  (function(){
-    var s=$("zona"); var o=document.createElement("option"); o.value=""; o.textContent="Usar mi ubicación"; s.appendChild(o);
+  // ---------- ciudad y zonas ----------
+  function llenarZonas(){
+    var s=$("zona"); s.innerHTML="";
+    var o=document.createElement("option"); o.value=""; o.textContent="Usar mi ubicación"; s.appendChild(o);
     ZONAS.forEach(function(z,i){ var op=document.createElement("option"); op.value=i; op.textContent=z[0]; s.appendChild(op); });
-  })();
+  }
+  function llenarCiudades(){
+    var s=$("ciudad");
+    CIUDADES.forEach(function(c){ var op=document.createElement("option"); op.value=c.id; op.textContent=c.n; s.appendChild(op); });
+  }
+  function setCiudad(id,manual,keepMe){
+    var c=getC(id)||getC("zaragoza");
+    state.ciudad=c.id; if(manual) state.manual=true;
+    ZONAS=zonasDe(c); llenarZonas(); $("ciudad").value=c.id;
+    document.title="Hueco · plazas libres en "+c.n;
+    try{ localStorage.setItem("hueco-ciudad",c.id); }catch(e){}
+    if(keepMe){ renderAll(); return; }
+    if(state.me && state.me.fuente==="gps" && dist(state.me,c)<RADIO_CIUDAD) renderAll();
+    else setMe(c.lat,c.lng,c.n+" (centro)","zona");
+  }
 
   // ---------- ubicación ----------
   function setMe(lat,lng,label,fuente,acc){ state.me={lat:lat,lng:lng,label:label,fuente:fuente,acc:acc||null,dir:null}; renderAll(); }
@@ -182,6 +233,10 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
       state.gpsErr=null;
       setMe(p.coords.latitude,p.coords.longitude,"Tu ubicación","gps",Math.round(p.coords.accuracy||0));
       aDireccion(p.coords.latitude,p.coords.longitude);
+      if(!state.manual){
+        var c=cercana(p.coords.latitude,p.coords.longitude);
+        if(c && c.d<RADIO_CIUDAD && c.c.id!==state.ciudad){ setCiudad(c.c.id,false,true); toast("Ciudad: "+c.c.n); }
+      }
     }
     function error(e){
       if(e && e.code===1){
@@ -216,7 +271,7 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
   }
   function visibles(){
     var arr=state.spots.map(function(s){ s._e=estadoEfectivo(s); s._d=(state.me&&s.lat!=null)?dist(state.me,s):null; return s; })
-      .filter(function(s){ return s._e==="libre"||s._e==="reservada"; });
+      .filter(function(s){ return (s.ciudad||"zaragoza")===state.ciudad && (s._e==="libre"||s._e==="reservada"); });
     arr.sort(function(a,b){
       if(a._d!=null&&b._d!=null) return a._d-b._d;
       return b.ts-a.ts;
@@ -248,9 +303,12 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
     else if(state.me&&state.me.fuente==="gps"){ pos={lat:state.me.lat,lng:state.me.lng}; origen="GPS"; }
     if(!pos){ pedirGps(); toast("Necesito tu ubicación: permite el GPS o elige tu zona."); return; }
     if(!calle){ $("calle").focus(); toast("Escribe la calle para que te encuentren."); return; }
+    var ciu=state.ciudad;
+    if(!zi){ var cc=cercana(pos.lat,pos.lng); if(cc && cc.d<RADIO_CIUDAD) ciu=cc.c.id; }
+    if(ciu!==state.ciudad) setCiudad(ciu,false,true);
     var id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
     var btn=$("btn-voy"); btn.disabled=true;
-    guardar(id,{calle:calle,lat:pos.lat,lng:pos.lng,zona:origen,ts:Date.now(),estado:"libre",by:state.uid},false)
+    guardar(id,{calle:calle,ciudad:ciu,lat:pos.lat,lng:pos.lng,zona:origen,ts:Date.now(),estado:"libre",by:state.uid},false)
       .then(function(){ $("calle").value=""; toast("Plaza publicada. Se muestra 20 minutos."); renderAll(); })
       .catch(function(){})
       .then(function(){ btn.disabled=false; });
@@ -331,6 +389,7 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
   $("tab-voy").addEventListener("click",function(){setTab("voy"); pedirSiHaceFalta();});
   $("tab-busco").addEventListener("click",function(){setTab("busco");});
   $("btn-voy").addEventListener("click",publicar);
+  $("ciudad").addEventListener("change",function(){ setCiudad(this.value,true); });
   $("zona").addEventListener("change",function(){
     var v=this.value;
     if(v===""){ pedirGps(); }
@@ -339,7 +398,7 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
   document.body.addEventListener("click",function(e){
     var b=e.target.closest("[data-act]"); if(!b) return;
     var act=b.getAttribute("data-act");
-    if(act==="gps"){ $("zona").value=""; pedirGps(); return; }
+    if(act==="gps"){ state.manual=false; $("zona").value=""; pedirGps(); return; }
     accion(act,b.getAttribute("data-id"));
   });
   setInterval(renderAll,20000);
@@ -351,7 +410,9 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
   }
   async function init(){
     state.uid=localId();
-    renderAll();
+    llenarCiudades();
+    var g=null; try{ g=localStorage.getItem("hueco-ciudad"); }catch(e){}
+    setCiudad(getC(g)?g:"zaragoza",false,true);
     pedirGps();
     var db=null, user=null;
     try{ if(window.claude&&claude.use){ db=await claude.use("db"); user=await claude.use("user"); } }catch(e){}
@@ -364,7 +425,7 @@ input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid 
     }
     state.db=db; state.col=db.collection("plazas");
     var desde=Date.now()-60*60*1000;
-    state.col.where("ts",">",desde).orderBy("ts","desc").limit(300).onSnapshot(function(snap){
+    state.col.where("ts",">",desde).orderBy("ts","desc").limit(500).onSnapshot(function(snap){
       state.spots=snap.docs.map(function(d){ var v=d.data(); v.id=d.id; return v; });
       renderAll();
     }, function(){
