@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hueco · plazas libres en Zaragoza</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e9edf1; --card:#ffffff; --ink:#14202b; --muted:#5b6b7a; --line:#d3dbe3;
+  --blue:#0a4ea3; --blue-ink:#ffffff; --free:#16844a; --free-bg:#dff3e7; --warn:#a65b00; --warn-bg:#fbeacc;
+  --danger:#b3261e; --ring:#c4cfda;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e151d; --card:#17212c; --ink:#e8eef4; --muted:#93a4b5; --line:#2a3947;
+    --blue:#5aa0f2; --blue-ink:#071522; --free:#52d58d; --free-bg:#12301f; --warn:#f0b04e; --warn-bg:#352408;
+    --danger:#ff8a80; --ring:#2e3f50; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e151d; --card:#17212c; --ink:#e8eef4; --muted:#93a4b5; --line:#2a3947;
+  --blue:#5aa0f2; --blue-ink:#071522; --free:#52d58d; --free-bg:#12301f; --warn:#f0b04e; --warn-bg:#352408;
+  --danger:#ff8a80; --ring:#2e3f50; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.4 "Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+.app{max-width:560px;margin:0 auto;padding:16px 16px 40px}
+header{display:flex;align-items:center;gap:12px;margin:4px 0 18px}
+.sign{flex:none;width:46px;height:46px;border-radius:10px;background:var(--blue);color:var(--blue-ink);display:grid;place-items:center;font:700 32px/1 "Barlow Condensed",system-ui,sans-serif;border:3px solid var(--blue-ink);outline:2px solid var(--blue)}
+h1{margin:0;font:700 30px/1 "Barlow Condensed",system-ui,sans-serif;letter-spacing:.2px}
+.sub{margin:2px 0 0;color:var(--muted);font-size:14px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.tab{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:14px 10px;font:700 22px/1.1 "Barlow Condensed",system-ui,sans-serif;cursor:pointer;min-height:64px}
+.tab small{display:block;font:500 13px/1.3 "Barlow",system-ui,sans-serif;color:var(--muted);margin-top:3px}
+.tab[aria-selected="true"]{background:var(--blue);border-color:var(--blue);color:var(--blue-ink)}
+.tab[aria-selected="true"] small{color:var(--blue-ink);opacity:.85}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.panel[hidden]{display:none}
+label{display:block;font-weight:600;margin:12px 0 6px}
+input,select{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:12px;min-height:48px}
+input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:14px 18px;min-height:52px;font:700 20px/1 "Barlow Condensed",system-ui,sans-serif;cursor:pointer;background:var(--blue);color:var(--blue-ink);text-decoration:none}
+.btn.block{width:100%}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.small{min-height:44px;padding:10px 14px;font-size:18px}
+.btn.bad{background:transparent;color:var(--danger);border:1.5px solid var(--danger)}
+.btn[disabled]{opacity:.5;cursor:default}
+.hint{color:var(--muted);font-size:14px;margin:10px 0 0}
+.where{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.pill{display:inline-block;font-size:13px;font-weight:600;border-radius:99px;padding:3px 10px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.pill.ok{background:var(--free-bg);color:var(--free);border-color:transparent}
+.pill.warn{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.radar{display:block;width:100%;height:auto;max-height:300px;margin:6px auto 14px}
+.spot{border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-top:10px;background:var(--card)}
+.spot.mine{border-color:var(--blue)}
+.spot .top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.spot .calle{font:700 21px/1.15 "Barlow Condensed",system-ui,sans-serif}
+.spot .meta{color:var(--muted);font-size:14px;margin-top:2px}
+.dist{flex:none;text-align:right;font:700 24px/1 "Barlow Condensed",system-ui,sans-serif;color:var(--free)}
+.dist small{display:block;font:500 12px/1.2 "Barlow",system-ui,sans-serif;color:var(--muted);margin-top:2px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.empty{text-align:center;padding:26px 8px;color:var(--muted)}
+.empty b{display:block;color:var(--ink);font:700 22px/1.2 "Barlow Condensed",system-ui,sans-serif;margin-bottom:4px}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:528px;margin:0 auto;background:var(--ink);color:var(--bg);padding:14px 16px;border-radius:12px;font-weight:600;transform:translateY(140%);transition:transform .25s}
+.toast.show{transform:none}
+.banner{background:var(--warn-bg);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:14px}
+.banner[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="sign" aria-hidden="true">P</div>
+    <div>
+      <h1>Hueco</h1>
+      <p class="sub">Plazas libres en la calle, avisadas por quien se va</p>
+    </div>
+  </header>
+
+  <div class="banner" id="banner" hidden></div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-voy" aria-selected="false" aria-controls="p-voy">Me voy<small>Dejo mi plaza libre</small></button>
+    <button class="tab" role="tab" id="tab-busco" aria-selected="true" aria-controls="p-busco">Busco plaza<small>Plazas libres ahora</small></button>
+  </div>
+
+  <section class="panel" id="p-voy" role="tabpanel" aria-labelledby="tab-voy" hidden>
+    <div class="where" id="where-voy"></div>
+    <label for="calle">Calle y número (aprox.)</label>
+    <input id="calle" type="text" placeholder="Ej.: Calle Alfonso I, 20" autocomplete="off" maxlength="80">
+    <label for="zona">Si no tienes GPS, elige tu zona</label>
+    <select id="zona"></select>
+    <p class="hint">Cuando salgas, pulsa el botón. La plaza se muestra 20 minutos a quien busca cerca.</p>
+    <div style="height:14px"></div>
+    <button class="btn block" id="btn-voy">Me voy, plaza libre</button>
+    <div id="mis"></div>
+  </section>
+
+  <section class="panel" id="p-busco" role="tabpanel" aria-labelledby="tab-busco">
+    <div class="where" id="where-busco"></div>
+    <svg class="radar" id="radar" viewBox="0 0 300 300" role="img" aria-label="Plazas libres alrededor de ti"></svg>
+    <div id="lista"></div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  var VIDA_MS = 20*60*1000;       // una plaza libre dura 20 min
+  var RESERVA_MS = 5*60*1000;     // "Voy" la guarda 5 min
+  var ZONAS = [
+    ["Centro / Plaza España",41.6504,-0.8800],["Casco Histórico / Pilar",41.6561,-0.8773],
+    ["Delicias",41.6558,-0.9066],["Universidad / San Francisco",41.6420,-0.8990],
+    ["Actur / Rey Fernando",41.6812,-0.8924],["San José",41.6420,-0.8700],
+    ["Las Fuentes",41.6560,-0.8615],["Torrero",41.6335,-0.8725],
+    ["Arrabal / Picarral",41.6743,-0.8730],["Oliver / Valdefierro",41.6393,-0.9249]
+  ];
+
+  var state = { me:null, spots:[], uid:null, db:null, col:null, local:false, tab:"busco" };
+  var $ = function(id){ return document.getElementById(id); };
+
+  function esc(s){ var d=document.createElement("div"); d.textContent=String(s==null?"":s); return d.innerHTML; }
+  function toast(msg){ var t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(function(){t.classList.remove("show");},3200); }
+
+  function dist(a,b){
+    var R=6371000, r=Math.PI/180;
+    var dLat=(b.lat-a.lat)*r, dLng=(b.lng-a.lng)*r;
+    var x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLng/2)*Math.sin(dLng/2);
+    return 2*R*Math.asin(Math.sqrt(x));
+  }
+  function fmtDist(m){ return m<1000 ? Math.round(m/10)*10+" m" : (m/1000).toFixed(1).replace(".",",")+" km"; }
+  function hace(ts){ var m=Math.floor((Date.now()-ts)/60000); return m<1?"ahora mismo":"hace "+m+" min"; }
+
+  // ---------- zonas ----------
+  (function(){
+    var s=$("zona"); var o=document.createElement("option"); o.value=""; o.textContent="Usar mi ubicación"; s.appendChild(o);
+    ZONAS.forEach(function(z,i){ var op=document.createElement("option"); op.value=i; op.textContent=z[0]; s.appendChild(op); });
+  })();
+
+  // ---------- ubicación ----------
+  function setMe(lat,lng,label,fuente){ state.me={lat:lat,lng:lng,label:label,fuente:fuente}; renderAll(); }
+  function pedirGps(){
+    if(!navigator.geolocation){ whereMsg("Sin GPS: elige tu zona en «Me voy».","warn"); return; }
+    navigator.geolocation.getCurrentPosition(function(p){
+      setMe(p.coords.latitude,p.coords.longitude,"Tu ubicación","gps");
+    }, function(){
+      whereMsg("No se pudo usar el GPS. Elige tu zona en «Me voy».","warn");
+    }, {enableHighAccuracy:true,timeout:9000,maximumAge:30000});
+  }
+  function whereMsg(t,cls){ ["where-voy","where-busco"].forEach(function(id){ $(id).innerHTML='<span class="pill '+(cls||"")+'">'+esc(t)+'</span>'; }); }
+  function renderWhere(){
+    if(!state.me) return;
+    var t = state.me.fuente==="gps" ? "Ubicación por GPS" : "Zona: "+state.me.label;
+    ["where-voy","where-busco"].forEach(function(id){
+      $(id).innerHTML='<span class="pill ok">'+esc(t)+'</span><button class="btn ghost small" data-act="gps" type="button">Usar GPS</button>';
+    });
+  }
+
+  // ---------- datos ----------
+  function estadoEfectivo(s){
+    var now=Date.now();
+    if(s.estado==="ocupada") return "ocupada";
+    if(now-s.ts>VIDA_MS) return "caducada";
+    if(s.estado==="reservada" && s.reservadaTs && now-s.reservadaTs<RESERVA_MS) return "reservada";
+    return "libre";
+  }
+  function visibles(){
+    var arr=state.spots.map(function(s){ s._e=estadoEfectivo(s); s._d=(state.me&&s.lat!=null)?dist(state.me,s):null; return s; })
+      .filter(function(s){ return s._e==="libre"||s._e==="reservada"; });
+    arr.sort(function(a,b){
+      if(a._d!=null&&b._d!=null) return a._d-b._d;
+      return b.ts-a.ts;
+    });
+    return arr;
+  }
+
+  function guardar(id,data,merge){
+    if(state.local){
+      var s=state.spots.filter(function(x){return x.id===id;})[0];
+      if(s&&merge) Object.assign(s,data); else if(!s) state.spots.push(Object.assign({id:id},data));
+      renderAll(); return Promise.resolve();
+    }
+    var ref=state.col.doc(id);
+    return (merge?ref.update(data):ref.set(data)).catch(function(e){
+      if(e&&e.code==="invalid_argument"){ toast("Tu acceso es solo de lectura: no puedes publicar ni reservar."); }
+      else if(e&&e.code==="quota_exceeded"){ toast("La base de datos está llena. Prueba más tarde."); }
+      else { toast("No se pudo guardar. Inténtalo otra vez."); }
+      throw e;
+    });
+  }
+
+  // ---------- acciones ----------
+  function publicar(){
+    var calle=$("calle").value.trim();
+    var zi=$("zona").value;
+    var pos=null, origen="";
+    if(zi!==""){ var z=ZONAS[+zi]; pos={lat:z[1]+(Math.random()-.5)*0.003,lng:z[2]+(Math.random()-.5)*0.003}; origen=z[0]; }
+    else if(state.me&&state.me.fuente==="gps"){ pos={lat:state.me.lat,lng:state.me.lng}; origen="GPS"; }
+    if(!pos){ toast("Activa el GPS o elige tu zona."); return; }
+    if(!calle){ $("calle").focus(); toast("Escribe la calle para que te encuentren."); return; }
+    var id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    var btn=$("btn-voy"); btn.disabled=true;
+    guardar(id,{calle:calle,lat:pos.lat,lng:pos.lng,zona:origen,ts:Date.now(),estado:"libre",by:state.uid},false)
+      .then(function(){ $("calle").value=""; toast("Plaza publicada. Se muestra 20 minutos."); renderAll(); })
+      .catch(function(){})
+      .then(function(){ btn.disabled=false; });
+  }
+  function accion(act,id){
+    if(act==="voy"){
+      guardar(id,{estado:"reservada",reservadaPor:state.uid,reservadaTs:Date.now()},true).then(function(){ toast("Plaza guardada 5 minutos para ti."); }).catch(function(){});
+    } else if(act==="ocupada"){
+      guardar(id,{estado:"ocupada"},true).then(function(){ toast("Gracias. Plaza marcada como ocupada."); }).catch(function(){});
+    } else if(act==="retirar"){
+      guardar(id,{estado:"ocupada"},true).then(function(){ toast("Aviso retirado."); }).catch(function(){});
+    } else if(act==="liberar"){
+      guardar(id,{estado:"libre",reservadaPor:null,reservadaTs:0},true).catch(function(){});
+    }
+  }
+
+  // ---------- render ----------
+  function renderRadar(arr){
+    var svg=$("radar"), C=150, MAXR=140, MAXM=500;
+    var h='';
+    [100,250,500].forEach(function(m){ var r=MAXR*m/MAXM; h+='<circle cx="'+C+'" cy="'+C+'" r="'+r+'" fill="none" stroke="var(--ring)" stroke-width="1.5" stroke-dasharray="4 5"/>'; h+='<text x="'+(C+r*0.71+3)+'" y="'+(C-r*0.71-2)+'" font-size="11" fill="var(--muted)">'+m+' m</text>'; });
+    h+='<line x1="'+C+'" y1="6" x2="'+C+'" y2="294" stroke="var(--ring)"/><line x1="6" y1="'+C+'" x2="294" y2="'+C+'" stroke="var(--ring)"/>';
+    h+='<text x="'+C+'" y="16" text-anchor="middle" font-size="12" font-weight="700" fill="var(--muted)">N</text>';
+    if(state.me){
+      arr.forEach(function(s,i){
+        if(s._d==null) return;
+        var r=Math.min(s._d,MAXM)/MAXM*MAXR;
+        var ang=Math.atan2(s.lng-state.me.lng,s.lat-state.me.lat);
+        var x=C+Math.sin(ang)*r, y=C-Math.cos(ang)*r;
+        var col=s._e==="reservada"?"var(--warn)":"var(--free)";
+        h+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="11" fill="'+col+'"/><text x="'+x.toFixed(1)+'" y="'+(y+4.5).toFixed(1)+'" text-anchor="middle" font-size="13" font-weight="700" fill="var(--card)">'+(i+1)+'</text>';
+      });
+      h+='<circle cx="'+C+'" cy="'+C+'" r="8" fill="var(--blue)" stroke="var(--card)" stroke-width="3"/>';
+    }
+    svg.innerHTML=h;
+  }
+
+  function spotHtml(s,i){
+    var mine = s.by===state.uid;
+    var reservadaPorMi = s._e==="reservada" && s.reservadaPor===state.uid;
+    var reservadaOtro = s._e==="reservada" && !reservadaPorMi;
+    var badge = reservadaPorMi ? '<span class="pill ok">Guardada para ti</span>' : reservadaOtro ? '<span class="pill warn">Alguien va hacia allí</span>' : '<span class="pill ok">Libre</span>';
+    var distHtml = s._d!=null ? '<div class="dist">'+fmtDist(s._d)+'<small>de ti</small></div>' : '';
+    var nav = 'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(s.lat+','+s.lng)+'&travelmode=driving';
+    var a='';
+    if(!reservadaPorMi && !reservadaOtro) a+='<button class="btn small" data-act="voy" data-id="'+esc(s.id)+'" type="button">Voy</button>';
+    if(reservadaPorMi) a+='<button class="btn ghost small" data-act="liberar" data-id="'+esc(s.id)+'" type="button">Ya no voy</button>';
+    a+='<a class="btn ghost small" href="'+nav+'" target="_blank" rel="noopener">Cómo llegar</a>';
+    if(mine) a+='<button class="btn bad small" data-act="retirar" data-id="'+esc(s.id)+'" type="button">Retirar</button>';
+    else a+='<button class="btn bad small" data-act="ocupada" data-id="'+esc(s.id)+'" type="button">Ya está ocupada</button>';
+    return '<div class="spot'+(mine?' mine':'')+'"><div class="top"><div><div class="calle">'+(i+1)+'. '+esc(s.calle)+'</div><div class="meta">'+hace(s.ts)+(mine?' · la has publicado tú':'')+'</div><div style="margin-top:8px">'+badge+'</div></div>'+distHtml+'</div><div class="actions">'+a+'</div></div>';
+  }
+
+  function renderLista(){
+    var arr=visibles();
+    renderRadar(arr);
+    var el=$("lista");
+    if(!arr.length){
+      el.innerHTML='<div class="empty"><b>Ahora no hay plazas avisadas</b>Cuando alguien pulse «Me voy», aparecerá aquí al momento. Esta pantalla se actualiza sola.</div>';
+      return;
+    }
+    el.innerHTML=arr.map(spotHtml).join("");
+  }
+  function renderMis(){
+    var mias=visibles().filter(function(s){return s.by===state.uid;});
+    $("mis").innerHTML = mias.length ? '<p class="hint">Tienes '+mias.length+' aviso'+(mias.length>1?'s':'')+' activo'+(mias.length>1?'s':'')+'. Puedes retirarlos desde «Busco plaza».</p>' : '';
+  }
+  function renderAll(){ renderWhere(); renderLista(); renderMis(); }
+
+  // ---------- pestañas y eventos ----------
+  function setTab(t){
+    state.tab=t;
+    $("tab-voy").setAttribute("aria-selected",t==="voy");
+    $("tab-busco").setAttribute("aria-selected",t==="busco");
+    $("p-voy").hidden=t!=="voy"; $("p-busco").hidden=t!=="busco";
+  }
+  $("tab-voy").addEventListener("click",function(){setTab("voy");});
+  $("tab-busco").addEventListener("click",function(){setTab("busco");});
+  $("btn-voy").addEventListener("click",publicar);
+  $("zona").addEventListener("change",function(){
+    var v=this.value;
+    if(v===""){ pedirGps(); }
+    else { var z=ZONAS[+v]; setMe(z[1],z[2],z[0],"zona"); }
+  });
+  document.body.addEventListener("click",function(e){
+    var b=e.target.closest("[data-act]"); if(!b) return;
+    var act=b.getAttribute("data-act");
+    if(act==="gps"){ $("zona").value=""; pedirGps(); return; }
+    accion(act,b.getAttribute("data-id"));
+  });
+  setInterval(renderAll,20000);
+
+  // ---------- arranque ----------
+  function localId(){
+    try{ var k=localStorage.getItem("hueco-uid"); if(!k){ k="u"+Math.random().toString(36).slice(2,10); localStorage.setItem("hueco-uid",k); } return k; }
+    catch(e){ return "u"+Math.random().toString(36).slice(2,10); }
+  }
+  async function init(){
+    state.uid=localId();
+    renderAll();
+    pedirGps();
+    var db=null, user=null;
+    try{ if(window.claude&&claude.use){ db=await claude.use("db"); user=await claude.use("user"); } }catch(e){}
+    if(user){ try{ state.uid=await user.id(); }catch(e){} }
+    if(!db){
+      state.local=true;
+      var b=$("banner"); b.hidden=false;
+      b.textContent="Modo de prueba: las plazas solo se ven en este móvil. Abre la app desde su enlace, con sesión iniciada, para compartirlas.";
+      renderAll(); return;
+    }
+    state.db=db; state.col=db.collection("plazas");
+    var desde=Date.now()-60*60*1000;
+    state.col.where("ts",">",desde).orderBy("ts","desc").limit(300).onSnapshot(function(snap){
+      state.spots=snap.docs.map(function(d){ var v=d.data(); v.id=d.id; return v; });
+      renderAll();
+    }, function(){
+      var b=$("banner"); b.hidden=false; b.textContent="No se pudo conectar con las plazas compartidas. Recarga la página.";
+    });
+  }
+  init();
+})();
+</script>
+</body>
+</html>
